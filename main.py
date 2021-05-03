@@ -88,7 +88,6 @@ for i in range(len(search_id)):
         if max == cnt:
             print(f"mbti {search_name}의 계정을 총 {max}개 찾았습니다")
 
-
 print(f"mbti {search_name}의 계정을 총 {cnt}개 찾았습니다")
 
 # 컨테이너(포스트) 12개 저장
