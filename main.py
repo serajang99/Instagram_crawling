@@ -82,8 +82,6 @@ for i in range(len(search_id)):
             cnt += 1
             # 필요한 정보 크롤링
             print(secret)
-
-
         driver.back()
         driver.find_element_by_xpath(search_xpath).send_keys(search_name)
         search_id = driver.find_elements_by_css_selector("div._7UhW9.xLCgt.qyrsm.KV-D4.uL8Hv")
