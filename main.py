@@ -12,7 +12,7 @@ chrome_options.add_argument('--headless')
 chrome_options.add_argument('--no-sandbox')
 chrome_options.add_argument('--disable-dev-shm-usage')
 # 크롬창(웹드라이버) 열기
-driver = webdriver.Chrome("./chromedriver")
+driver = webdriver.Chrome(".idea/chromedriver")
 
 # parsing을 위한 함수를 생성
 def remove_html_tags(data):
