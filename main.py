@@ -15,11 +15,8 @@ import os
 
 import emoji
 
-
-
-# import makecsv
-credential_path = "/Users/jangseowoo/Downloads/stunning-yeti-312411-f2d6f0754d62.json"
-
+# input your credential_path
+credential_path = ""
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_path
 
 chrome_options = Options()
@@ -91,10 +88,16 @@ def detect_properties(path):
             break
 
     # 해당 image의 가장 큰 fraction을 차지하는 color의 rgb값을 출력
-    print("r: {}\tg: {}\tb: {}".format(color_r, color_g, color_b))
+    # print("r: {}\tg: {}\tb: {}".format(color_r, color_g, color_b))
+
+    rgb_sum = (color_r + color_g + color_b) / 255.0
+    color_s = 1 - (3 / rgb_sum) * (min(color_r, color_g, color_b) / 255.0)     # 채도
+    color_i = 1 / 3 * rgb_sum                                                  # 명도
 
     if response.error.message:
         raise Exception('{}\nFor more info on error messages, check: ''https://cloud.google.com/apis/design/errors'.format(response.error.message))
+
+    return color_s, color_i
 
 
 # login 유지
@@ -105,8 +108,8 @@ login_x_path = '/html/body/div[1]/section/main/div/div/div[1]/div/form/div/div[3
 
 # 개인정보 보안을 위한 수정
 
-#insta_id = 'myaho_123' # input("인스타그램 아이디를 입력하세요 : ")
-#insta_pw = 'capstonemyaho' # input("인스타그램 비밀번호를 입력하세요 : ")
+insta_id = 'myaho_123' # input("인스타그램 아이디를 입력하세요 : ")
+insta_pw = 'capstonemyaho' # input("인스타그램 비밀번호를 입력하세요 : ")
 
 
 driver.find_element_by_name('username').send_keys(insta_id)
@@ -144,7 +147,7 @@ for mbti in search_name:
     cnt = 0
 
     # 들어가야하는 계정 선택
-    for i in range(21,len(search_id)):
+    for i in range(len(search_id)):
 
         print(mbti, search_id[i].text)
         print(f"search_id 길이 = {len(search_id)}")
@@ -161,8 +164,7 @@ for mbti in search_name:
             print(elements)
             print(len(elements))
             #print(elements)
-            if( len(elements) != 0):
-
+            if(len(elements) != 0):
                 # 비공개 계정
                 secret = 1
                 print(secret)
@@ -270,24 +272,15 @@ print(f"mbti {search_name}의 계정을 총 {cnt}개 찾았습니다")
 >>>>>>> 323c1d2031b542e8fc6dede9f99396b79188d93c
 
                                 driver.find_element_by_xpath('/html/body/div[1]/section/main/div/div['+str(story_idx)+']/article/div[1]/div/div['+str(row)+']/div['+str(col)+']').click()
-                                emoji_list = None
-                                if emoji_list is None:
-                                    print('NuLL')
-                                else:
-                                    print(emoji_list)
-                                # 게시글 텍스트 추출
-                                #context = driver.find_element_by_css_selector('div.C4VMK').text
 
-                                #print(emoji_list)
-                                context = driver.find_element_by_css_selector('div.C4VMK').text
-                                if context is None:
-                                    print('Null context')
-                                emoji_list = re.findall(emoji.get_emoji_regexp(), context)
-                                if emoji_list is None:
-                                    print('NuLL')
-                                else:
+                                # 게시글 텍스트 추출
+                                try :
+                                    context = driver.find_element_by_css_selector('div.C4VMK').text
+                                    emoji_list = re.findall(emoji.get_emoji_regexp(), context)
+                                    emoticons += len(emoji_list)
                                     print(emoji_list)
-                                emoticons += len(emoji_list)
+                                except NoSuchElementException:
+                                    print('No context in post')
                                 time.sleep(2)
                                 driver.find_element_by_xpath('/html/body/div[5]/div[3]/button').click() #X : 창 닫기
                                 driver.back()
@@ -298,10 +291,22 @@ print(f"mbti {search_name}의 계정을 총 {cnt}개 찾았습니다")
                     pass
                 print('-----------------------------------------------------')
                 # image 저장하고 색상 값 분석
+                saturation_list = []
+                intensity_list = []
+
                 for j, n in enumerate(image_list):
                     urllib.request.urlretrieve(n['src'], str(j)+'.jpg')
                     image_name = os.path.join(os.path.dirname(__file__), str(j)+'.jpg')
-                    detect_properties(image_name)
+                    saturation, intensity = detect_properties(image_name)
+                    saturation_list.append(saturation)
+                    intensity_list.append(intensity)
+                    print('+', end='')
+
+                saturation_avg = sum(saturation_list) / len(saturation_list)
+                intensity_avg = sum(intensity_list) / len(intensity_list)
+                print('\nimage count :', len(saturation_list))
+                print('average of saturation(%) :', round(saturation_avg*100, 5))
+                print('average of intensity(%) :', round(intensity_avg*100, 5))
 
                 # 게시글 당 평균 이모티콘 수
                 if len(image_list) != 0:  # 게시글이 없으면 나눗셈 오류나므로 예외 처리
