@@ -16,7 +16,7 @@ import os
 import emoji
 
 # input your credential_path
-credential_path = ""
+credential_path = "C:\\21-1학기\캡디1\\vigilant-willow-312400-e78d152f3d88.json"
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_path
 
 chrome_options = Options()
@@ -91,8 +91,13 @@ def detect_properties(path):
     # print("r: {}\tg: {}\tb: {}".format(color_r, color_g, color_b))
 
     rgb_sum = (color_r + color_g + color_b) / 255.0
-    color_s = 1 - (3 / rgb_sum) * (min(color_r, color_g, color_b) / 255.0)     # 채도
-    color_i = 1 / 3 * rgb_sum                                                  # 명도
+    if rgb_sum != 0:
+        color_s = 1 - (3 / rgb_sum) * (min(color_r, color_g, color_b) / 255.0)     # 채도
+        color_i = 1 / 3 * rgb_sum  # 명도
+    else:
+        color_s = 0
+        color_i = 0
+
 
     if response.error.message:
         raise Exception('{}\nFor more info on error messages, check: ''https://cloud.google.com/apis/design/errors'.format(response.error.message))
@@ -129,7 +134,8 @@ search_xpath = '/html/body/div[1]/section/nav/div[2]/div/div/div[2]/input'
 # 미통과 미미 수준 'enfp','istp','infp','esfp','intj' ** 10개 정도로 수정
 # 미통과 심각 수준 'estj','estp' 'infj'**굉장히 문제가 많음  est들은 인스타를 안하는 건가 -> 오픈채팅방으로 구하기
 # 통과 'istj','isfj','isfp','intp','esfj','entj','entp','enfj'
-search_name = ['istj','isfj','isfp','intj','intp','esfj','entj','entp','enfj','enfp','istp','infp','esfp']
+#search_name = ['istj','isfj','isfp','intj','intp','esfj','entj','entp','enfj','enfp','istp','infp','esfp']
+search_name = ['isfj']
 for mbti in search_name:
     # print("mbti", mbti)
     driver.find_element_by_xpath(search_xpath).send_keys(mbti)
@@ -219,24 +225,7 @@ for mbti in search_name:
 
                 # tag_post = len(driver.find_elements_by_css_selector('div._9AhH0'))
 
-<<<<<<< HEAD
-        if elements:
-            # 비공개 계정
-            secret = 1
-            print(secret)
-        else:
-            # 공개 계정
-            cnt += 1
-            # 필요한 정보 크롤링
-            print(secret)
-        driver.back()
-        driver.find_element_by_xpath(search_xpath).send_keys(search_name)
-        search_id = driver.find_elements_by_css_selector("div._7UhW9.xLCgt.qyrsm.KV-D4.uL8Hv")
-        if max == cnt:
-            print(f"mbti {search_name}의 계정을 총 {max}개 찾았습니다")
 
-print(f"mbti {search_name}의 계정을 총 {cnt}개 찾았습니다")
-=======
                 # 이미지 크롤링 구현 -> id 폴더 생성 -> id에 해당하는 게시글 사진(여러장인 게시글 일 경우 대표사진만) 폴더에 모음
                 # 폴더 약 200개 생성 예정
 
@@ -269,7 +258,7 @@ print(f"mbti {search_name}의 계정을 총 {cnt}개 찾았습니다")
                                 else:
                                     story_idx = 2
                                 print(f'row = {row}, col = {col}')
->>>>>>> 323c1d2031b542e8fc6dede9f99396b79188d93c
+
 
                                 driver.find_element_by_xpath('/html/body/div[1]/section/main/div/div['+str(story_idx)+']/article/div[1]/div/div['+str(row)+']/div['+str(col)+']').click()
 
