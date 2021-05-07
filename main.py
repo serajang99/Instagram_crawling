@@ -14,6 +14,11 @@ import urllib.request
 import os
 
 import emoji
+import csv
+
+f = open('mbti_result.csv', 'w', newline='')
+wr = csv.writer(f)
+wr.writerow(['mbti','id','secret','following','follower','post','tag_post','story','saturation','intensity','emoji'])
 
 # input your credential_path
 credential_path = "C:\\21-1학기\캡디1\\vigilant-willow-312400-e78d152f3d88.json"
@@ -24,7 +29,7 @@ chrome_options.add_argument('--headless')
 chrome_options.add_argument('--no-sandbox')
 chrome_options.add_argument('--disable-dev-shm-usage')
 # 크롬창(웹드라이버) 열기
-driver = webdriver.Chrome(".idea/chromedriver")
+driver = webdriver.Chrome("./chromedriver")
 
 
 # parsing을 위한 함수를 생성
@@ -49,7 +54,8 @@ def scroll_down():
 
 def add_image():
     temp_image_list = []
-    image = driver.find_elements_by_class_name("FFVAD")
+    # image = driver.find_elements_by_class_name("FFVAD")
+    image = driver.find_elements_by_css_selector('img.FFVAD')
     for n in image:
         temp_image = {}
         temp_image['alt'] = n.get_attribute('alt')
@@ -91,13 +97,12 @@ def detect_properties(path):
     # print("r: {}\tg: {}\tb: {}".format(color_r, color_g, color_b))
 
     rgb_sum = (color_r + color_g + color_b) / 255.0
-    if rgb_sum != 0:
+    if rgb_sum !=0 :
         color_s = 1 - (3 / rgb_sum) * (min(color_r, color_g, color_b) / 255.0)     # 채도
         color_i = 1 / 3 * rgb_sum  # 명도
     else:
         color_s = 0
         color_i = 0
-
 
     if response.error.message:
         raise Exception('{}\nFor more info on error messages, check: ''https://cloud.google.com/apis/design/errors'.format(response.error.message))
@@ -134,8 +139,7 @@ search_xpath = '/html/body/div[1]/section/nav/div[2]/div/div/div[2]/input'
 # 미통과 미미 수준 'enfp','istp','infp','esfp','intj' ** 10개 정도로 수정
 # 미통과 심각 수준 'estj','estp' 'infj'**굉장히 문제가 많음  est들은 인스타를 안하는 건가 -> 오픈채팅방으로 구하기
 # 통과 'istj','isfj','isfp','intp','esfj','entj','entp','enfj'
-#search_name = ['istj','isfj','isfp','intj','intp','esfj','entj','entp','enfj','enfp','istp','infp','esfp']
-search_name = ['isfj']
+search_name = ['istj','isfj','isfp','intj','intp','esfj','entj','entp','enfj','enfp','istp','infp','esfp']
 for mbti in search_name:
     # print("mbti", mbti)
     driver.find_element_by_xpath(search_xpath).send_keys(mbti)
@@ -152,17 +156,23 @@ for mbti in search_name:
 
     cnt = 0
 
+    secret=0; following=0; follower=0; post=0; tag_post=0; story_cnt=0; saturation_avg=0; intensity_avg=0; emoti=0;
+    id = ""
     # 들어가야하는 계정 선택
     for i in range(len(search_id)):
 
         print(mbti, search_id[i].text)
         print(f"search_id 길이 = {len(search_id)}")
-        if mbti not in search_id[i].text:
+        if mbti not in search_id[i].text or '#' not in search_id[i].text:
             secret = 0
             print(search_id[i].text)
+            id = search_id[i].text
             # time.sleep(3)
             # search_id[i].click()
+            # 해당 계정 클릭
             driver.execute_script("arguments[0].click();", search_id[i])
+
+            # 비공계 알려주는 칸 ㅎㅎ
             elements=[]
             time.sleep(3)
             elements = driver.find_element_by_css_selector('article.ySN3v').text
@@ -179,20 +189,20 @@ for mbti in search_name:
                 cnt += 1
                 time.sleep(3)
                 # 필요한 정보 크롤링
-                post = driver.find_element_by_css_selector('span.-nal3 span').text
+                post = int(driver.find_element_by_css_selector('span.-nal3 span').text.replace(",",""))
                 follower = driver.find_element_by_css_selector('li.Y8-fY:nth-child(2) span').text
                 following = driver.find_element_by_css_selector('li.Y8-fY:nth-child(3) span').text
                 story = len(driver.find_elements_by_css_selector('div.tUtVM'))
 
                 print('open account',story)
 
-                print(f'story = {story}')
+                print(f'story = {story_cnt}')
                 # tag post 없는 경우에서 오류나는 듯? 수정 할 것
                 # 태그된 게시물 버튼 경로가 위에 스토리가 있을 때와 없을때가 다르다.....ㅅㅂ... ++ 릴스 있으면 또 달라지지만 오류는 안나니까...희희 -> 가능성 희박...
 
                 time.sleep(3)
                 #tag_index = 0
-                if (story != 0):
+                if story_cnt != 0:
                     tag_index = len(driver.find_elements_by_css_selector('div.fx7hk a'))
                     print(f'tag_index={tag_index}')
                     tag = driver.find_element_by_xpath('/html/body/div[1]/section/main/div/div[2]/a[' + str(tag_index) + ']').click()
@@ -225,12 +235,11 @@ for mbti in search_name:
 
                 # tag_post = len(driver.find_elements_by_css_selector('div._9AhH0'))
 
-
                 # 이미지 크롤링 구현 -> id 폴더 생성 -> id에 해당하는 게시글 사진(여러장인 게시글 일 경우 대표사진만) 폴더에 모음
                 # 폴더 약 200개 생성 예정
 
                 print(f'secret = {secret}')
-                print(f"post: {post},follower: {follower},following: {following},story: {story}, tag_post: {tag_post}")
+                print(f"post: {post},follower: {follower},following: {following},story: {story_cnt}, tag_post: {tag_post}")
 
                 # 게시글의 색감 추출
                 # 게시글 속 이모티콘 수 세기 => image_list의 개수로 나눠주어서 평균 내기
@@ -243,6 +252,9 @@ for mbti in search_name:
                             # 이미 확인한 image의 경우, pass
                             if n in image_list:
                                 pass
+                            elif n['src'] is None:
+                                # print("src is none test!! ", n['src'])
+                                pass
                             else:
                                 image_list.append(n)
                                 print(n)
@@ -253,12 +265,11 @@ for mbti in search_name:
                                 print(image_list.index(n))
                                 row = int(idx/3) + 1
                                 col = int(idx % 3) + 1
-                                if story != 0:
+                                if story_cnt != 0:
                                     story_idx = 3
                                 else:
                                     story_idx = 2
                                 print(f'row = {row}, col = {col}')
-
 
                                 driver.find_element_by_xpath('/html/body/div[1]/section/main/div/div['+str(story_idx)+']/article/div[1]/div/div['+str(row)+']/div['+str(col)+']').click()
 
@@ -284,6 +295,8 @@ for mbti in search_name:
                 intensity_list = []
 
                 for j, n in enumerate(image_list):
+                    time.sleep(5)
+                    # print(len(image_list), j, type(n['src']), n['src'])
                     urllib.request.urlretrieve(n['src'], str(j)+'.jpg')
                     image_name = os.path.join(os.path.dirname(__file__), str(j)+'.jpg')
                     saturation, intensity = detect_properties(image_name)
@@ -300,6 +313,7 @@ for mbti in search_name:
                 # 게시글 당 평균 이모티콘 수
                 if len(image_list) != 0:  # 게시글이 없으면 나눗셈 오류나므로 예외 처리
                     print(f'average of emoticons = {emoticons / len(image_list)}')
+                    emoti = emoticons / len(image_list)
                 else:
                     print('No emoticons')
 
@@ -316,4 +330,9 @@ for mbti in search_name:
                 time.sleep(2)
                 search_id = driver.find_elements_by_css_selector("div._7UhW9.xLCgt.qyrsm.KV-D4.uL8Hv")
                 print(len(search_id))
+
+            wr.writerow([mbti,id,secret,following,follower,post,tag_post,story_cnt,round(saturation_avg*100, 5),round(intensity_avg*100, 5),round(emoti,5)])
+
     print(f"mbti {mbti}의 계정을 총 {cnt}개 찾았습니다")
+
+f.close()
